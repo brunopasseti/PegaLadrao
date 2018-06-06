@@ -1,0 +1,133 @@
+
+module PegaLadrao(input [17:0] SW, input CLK_50,input [3:0] BT, output reg [17:0] LEDR, output reg [7:0] LEDG, output segA, segB, segC, segD, segE, segF, segG,segDP,
+				  input clk,output segA1, segB1, segC1, segD1, segE1, segF1, segG1, segDP1,segA2, segB2, segC2, segD2, segE2, segF2, segG2,segDP2);
+	reg [23:0] cnt,cnt1,cnt2;
+	always @(posedge clk) begin 
+		cnt <= cnt+24'h1;
+		cnt1 <= cnt1 +24'h1;
+		cnt2 <= cnt2 +24'h1;
+	end
+	wire cntovf = &cnt;
+	wire cntovf1 = &cnt1;
+	wire cntovf2 = &cnt2;
+// UNI is a counter that counts from 0 to 9
+	reg [3:0] UNI;
+	reg [3:0] DEZ;
+	reg [3:0] CEN = 3;
+	reg [17:0] ladrao;
+
+	
+	always @(posedge clk) begin 
+		if(cntovf) begin 
+			UNI <= (UNI==4'h0 ? 4'h9 : UNI-4'h1);
+		end
+		if(UNI == 0)
+			if(cntovf1) begin 
+				DEZ <= (DEZ==4'h0 ? 4'h5 : DEZ-4'h1);
+			end
+		if(DEZ == 0 && UNI == 0)
+			if(cntovf2) begin
+				CEN <= CEN - 1;
+			end
+		if(UNI == 0 && DEZ == 0 && CEN == 0)begin
+			UNI <= 0;
+			DEZ <= 0;
+			CEN <= 0;
+		end
+		/*if(//resetajogo == 1) begin      // RESET DO JOGO
+			CEN <= 3;
+			UNI <= 0;
+			DEZ <= 0;
+			resetajogo == 0;
+			nenhumjogoativo == 0;            esse botao do resetajogo so podera ser apertado se a flag de "nenhum jogo ativo" estiver 1
+		end*/
+	end
+	reg [7:0] SevenSeg;
+	always @(*)
+	case(UNI)
+		4'h0: SevenSeg = 8'b11111100;
+		4'h1: SevenSeg = 8'b01100000;
+		4'h2: SevenSeg = 8'b11011010;
+		4'h3: SevenSeg = 8'b11110010;
+		4'h4: SevenSeg = 8'b01100110;
+		4'h5: SevenSeg = 8'b10110110;
+		4'h6: SevenSeg = 8'b10111110;
+		4'h7: SevenSeg = 8'b11100000;
+		4'h8: SevenSeg = 8'b11111110;
+		4'h9: SevenSeg = 8'b11110110;
+		default: SevenSeg = 8'b00000000;
+	endcase
+	
+
+	assign {segA, segB, segC, segD, segE, segF, segG,segDP} = ~SevenSeg;
+	
+	reg [7:0] SevenSeg1;
+	always @(*)
+	case(DEZ)
+		4'h0: SevenSeg1 = 8'b11111100;
+		4'h1: SevenSeg1 = 8'b01100000;
+		4'h2: SevenSeg1 = 8'b11011010;
+		4'h3: SevenSeg1 = 8'b11110010;
+		4'h4: SevenSeg1 = 8'b01100110;
+		4'h5: SevenSeg1 = 8'b10110110;
+		4'h6: SevenSeg1 = 8'b10111110;
+		4'h7: SevenSeg1 = 8'b11100000;
+		4'h8: SevenSeg1 = 8'b11111110;
+		4'h9: SevenSeg1 = 8'b11110110;
+		default: SevenSeg1 = 8'b00000000;
+	endcase
+
+	assign {segA1, segB1, segC1, segD1, segE1, segF1, segG1,segDP1} = ~SevenSeg1;
+	
+	reg [7:0] SevenSeg2;
+	always @(*)
+	case(CEN)
+		4'h0: SevenSeg2 = 8'b11111100;
+		4'h1: SevenSeg2 = 8'b01100000;
+		4'h2: SevenSeg2 = 8'b11011010;
+		4'h3: SevenSeg2 = 8'b11110010;
+		4'h4: SevenSeg2 = 8'b01100110;
+		4'h5: SevenSeg2 = 8'b10110110;
+		4'h6: SevenSeg2 = 8'b10111110;
+		4'h7: SevenSeg2 = 8'b11100000;
+		4'h8: SevenSeg2 = 8'b11111110;
+		4'h9: SevenSeg2 = 8'b11110110;
+		default: SevenSeg2 = 8'b00000000;
+	endcase
+
+	assign {segA2, segB2, segC2, segD2, segE2, segF2, segG2,segDP2} = ~SevenSeg2;
+	
+	always@(posedge clk) begin
+		LEDR = ladrao;
+
+		if(ladrao == SW) begin
+			LEDG = 8'b00000001;
+		end	else LEDG = 8'b00000000;
+	end
+	always@(negedge DEZ) begin // pode ser repeat sempre q UNI 5x
+		ladrao[0] = !ladrao[1];
+		ladrao[1] = !ladrao[2] ^ ladrao[1];
+		ladrao[2] = !ladrao[3];
+		ladrao[3] = !ladrao[4] ^ ladrao[1];
+		ladrao[4] = !ladrao[5] ^ ladrao[1];
+		ladrao[5] = !ladrao[6] ^ ladrao[1];
+		ladrao[6] = !ladrao[7] ^ ladrao[1];
+		ladrao[7] = !ladrao[8];
+		ladrao[8] = !ladrao[9] ^ ladrao[1];
+		ladrao[9] = !ladrao[10] ^ ladrao[1];
+		ladrao[10] = !ladrao[11];
+		ladrao[11] = !ladrao[12];
+		ladrao[12] = !ladrao[13] ^ ladrao[1];
+		ladrao[13] = !ladrao[14];
+		ladrao[14] = !ladrao[15] ^ ladrao[1];
+		ladrao[15] = !ladrao[16] ^ ladrao[1];
+		ladrao[16] = !ladrao[17] ^ ladrao[1];
+		ladrao[17] = !ladrao[10];
+	end
+	/*always@(posedge UNI)begin
+		if(ladrao == 18'b1)
+				ladrao = 18'b100000000000000000;
+		ladrao = ladrao >> 1;
+	end*/
+
+endmodule
